@@ -11,22 +11,16 @@ pipeline {
 
 
     stages {
-
-
         stage('clean workspace'){
             steps{
                 cleanWs()
             }
         }
-     
-
-
         stage("Git Checkout"){
             steps{
                git branch: 'main', url: 'https://github.com/nahidkishore/Netflix-clone.git'
             }
         }
-        
     
          stage("Trivy FS Scan"){
            steps{
@@ -62,19 +56,17 @@ pipeline {
             steps {
                 sh "npm install"
             }
-        }
-       
-        
+        } 
 
         stage("Build and Push to Docker Hub"){
                steps{
                    
                 echo 'login into docker hub and pushing image....'
                 withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
-                     sh "docker build . -t santa-app"
-                     sh "docker tag santa-app ${env.dockerHubUser}/santa-app:latest"
+                     sh "docker build . -t netflix-app --build-arg TMDB_V3_API_KEY=c98fdab914b9bacee19db52aeb2707f4"
+                     sh "docker tag netflix-app ${env.dockerHubUser}/netflix-app:latest"
                      sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-                     sh "docker push ${env.dockerHubUser}/santa-app:latest"
+                     sh "docker push ${env.dockerHubUser}/netflix-app:latest"
 
 
                }
@@ -83,7 +75,7 @@ pipeline {
 
          stage("Deploy to Container"){
             steps{
-                sh " docker run -d --name santa-app -p 8085:8080 nahid0002/santa-app:latest "
+                sh " docker run -d --name netflix-app -p 8085:80 nahid0002/netflix-app:latest "
             }
         }
 
@@ -92,7 +84,7 @@ pipeline {
 
                 withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                      
-                    sh "trivy image ${env.dockerHubUser}/santa-app:latest > trivy.txt" 
+                    sh "trivy image ${env.dockerHubUser}/netflix-app:latest > trivy.txt" 
 
 
                }
